@@ -109,3 +109,9 @@ venv.bak/
 # virtual environment files
 interpreter/
 
+# temporarily logged images during process
+progress/
+
+# result directories
+lower_jaws/
+upper_jaws/
