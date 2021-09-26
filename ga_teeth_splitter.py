@@ -2,6 +2,7 @@ import cv2
 import time
 import copy
 import numpy as np
+import os
 from ga_core import GeneticCore
 from preprocessing import CLAHE
 
@@ -60,6 +61,8 @@ for i in range(1, 4):
     for gene in chromosome.genes:
         genes_avg_intensities.append(gene_avg_intensity(gene, enhanced_image, enhanced_image.shape[0]))
 
+    regions = []
+
     for j in range(len(chromosome.genes)):
         gene = chromosome.genes[j]
         
@@ -67,14 +70,36 @@ for i in range(1, 4):
         if j > 0 and j < (len(chromosome.genes) - 1):
             if genes_avg_intensities[j] > genes_avg_intensities[j-1] and genes_avg_intensities[j] > genes_avg_intensities[j+1]:
                 color = [0, 0, 127]
+            else:
+                regions.append((previous_gene.min_points(), gene.max_points()))
+                previous_gene = gene
+                previous_gene_j = j
+        elif j == 0:
+            regions.append((1, gene.max_points()))
+            previous_gene = gene
+            previous_gene_j = j
+        elif j == (len(chromosome.genes) - 1):
+            regions.append((gene.min_points(), final_image.shape[1]))
 
         for point in gene.get_points(final_image.shape[0]):
             x, y = point
             final_image[y-1, x-1] = color
 
+    # Export teeth
+    if not os.path.exists('./upper_jaws/%d' % i):
+        os.mkdir('./upper_jaws/%d' % i)
+    y1, y2 = 0, final_image.shape[0]-1
+    number = 1
+    for region in regions:
+        x1, x2 = region[0]-1, region[1]-1
+        cropped = img[y1:y2+1, x1:x2+1]
+        cv2.imwrite(f'./upper_jaws/{i}/{number}.bmp', cropped)
+        number += 1
 
     print('saving result image')
     cv2.imwrite('./upper_jaws/%d_upper_clahe_sauvola_result.bmp' % i, final_image)
+
+    #####################
 
     print('loading lower jaw number %d' % i)
     img_address = './lower_jaws/%d_lower_clahe_sauvola.bmp' % i
@@ -98,6 +123,8 @@ for i in range(1, 4):
     for gene in chromosome.genes:
         genes_avg_intensities.append(gene_avg_intensity(gene, enhanced_image, enhanced_image.shape[0]))
 
+    regions = []
+
     for j in range(len(chromosome.genes)):
         gene = chromosome.genes[j]
         
@@ -105,10 +132,31 @@ for i in range(1, 4):
         if j > 0 and j < (len(chromosome.genes) - 1):
             if genes_avg_intensities[j] > genes_avg_intensities[j-1] and genes_avg_intensities[j] > genes_avg_intensities[j+1]:
                 color = [0, 0, 127]
+            else:
+                regions.append((previous_gene.min_points(), gene.max_points()))
+                previous_gene = gene
+                previous_gene_j = j
+        elif j == 0:
+            regions.append((1, gene.max_points()))
+            previous_gene = gene
+            previous_gene_j = j
+        elif j == (len(chromosome.genes) - 1):
+            regions.append((gene.min_points(), final_image.shape[1]))
 
         for point in gene.get_points(final_image.shape[0]):
             x, y = point
             final_image[y-1, x-1] = color
+
+    # Export teeth
+    if not os.path.exists('./lower_jaws/%d' % i):
+        os.mkdir('./lower_jaws/%d' % i)
+    y1, y2 = 0, final_image.shape[0]-1
+    number = 1
+    for region in regions:
+        x1, x2 = region[0]-1, region[1]-1
+        cropped = img[y1:y2+1, x1:x2+1]
+        cv2.imwrite(f'./lower_jaws/{i}/{number}.bmp', cropped)
+        number += 1
 
     print('saving result image')
     cv2.imwrite('./lower_jaws/%d_lower_clahe_sauvola_result.bmp' % i, final_image)
