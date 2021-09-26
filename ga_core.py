@@ -48,6 +48,12 @@ class Gene():
         
         return self.points
 
+    def min_points(self):
+        return min(self.top, self.center, self.bottom)
+
+    def max_points(self):
+        return max(self.top, self.center, self.bottom)
+
 
 class Chromosome():
     def __init__(self, genes=None):
@@ -138,6 +144,29 @@ class Individual():
 
         return child1, child2
 
+    def init_crossover_onepoint_best_parts(parent1, parent2, image):
+        if parent1.chromosome.length() != parent2.chromosome.length():
+            raise Exception('GA:EXCEPTION >>> parents must have chromosomes with the same length')
+        
+        chromosome_length = parent1.chromosome.length()
+
+        cross_point = random.randint(1, chromosome_length)
+
+        left_genes_parent_1 = parent1.chromosome.genes[:cross_point]
+        left_genes_parent_2 = parent2.chromosome.genes[:cross_point]
+        right_genes_parent_1 = parent1.chromosome.genes[cross_point:]
+        right_genes_parent_2 = parent2.chromosome.genes[cross_point:]
+
+        left_1_cost = Chromosome(left_genes_parent_1).get_cost(image)
+        left_2_cost = Chromosome(left_genes_parent_2).get_cost(image)
+        right_1_cost = Chromosome(right_genes_parent_1).get_cost(image)
+        right_2_cost = Chromosome(right_genes_parent_2).get_cost(image)
+
+        left_genes = left_genes_parent_1 if left_1_cost < left_2_cost else left_genes_parent_2
+        right_genes = right_genes_parent_1 if right_1_cost < right_2_cost else right_genes_parent_2
+
+        return Individual(Chromosome(left_genes + right_genes), parent1, parent2)
+
 
 class Population():
     def __init__(self, gen):
@@ -216,21 +245,25 @@ class GeneticCore():
             next_pop = Population(current_pop.gen + 1)
             
             # generating half of the next population
-            for _ in range(self.pop_size // 4 + 1):
+            for _ in range(self.pop_size // 2 + 1):
                 # select parents
                 parent1 = random.choice(current_half_top)
                 parent2 = random.choice(current_half_top)
                 
                 # crossover parents
-                child1, child2 = Individual.init_crossover_onepoint(parent1, parent2)
+                ### child1, child2 = Individual.init_crossover_onepoint(parent1, parent2)
+                child = Individual.init_crossover_onepoint_best_parts(parent1, parent2, self.image)
 
                 # mutate newly generated individual
-                if random.random() < self.mutation_probability: child1.mutate(self.image.shape[1])
-                if random.random() < self.mutation_probability: child2.mutate(self.image.shape[1])
+                ### if random.random() < self.mutation_probability: child1.mutate(self.image.shape[1])
+                ### if random.random() < self.mutation_probability: child2.mutate(self.image.shape[1])
+                if random.random() < self.mutation_probability: child.mutate(self.image.shape[1])
 
                 # add to new population
-                next_pop.add_individual(child1)
-                next_pop.add_individual(child2)
+                ### next_pop.add_individual(child1)
+                ### next_pop.add_individual(child2)
+                next_pop.add_individual(child)
+
 
             # forwarding half top of the current generation to the next population
             next_pop.add_individuals(current_half_top)
