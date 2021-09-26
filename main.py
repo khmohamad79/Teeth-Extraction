@@ -3,6 +3,7 @@ from ROI_extraction import *
 from middle_line_via_snake import *
 from jaw_separation import separate_jaws
 import time
+import os
 
 for i in range(1, 51):
     print("loading image number %d" % i)
@@ -76,6 +77,10 @@ for i in range(1, 51):
     # plt.imshow(X=lower_jaw, cmap='gray')
     # plt.show()
 
+    if not os.path.exists('./upper_jaws'):
+        os.mkdir('./upper_jaws')
+    if not os.path.exists('./lower_jaws'):
+        os.mkdir('./lower_jaws')
     # print("save results? (y/n)")
     # if input() == 'y':
     cv2.imwrite('./upper_jaws/%d_upper_clahe_sauvola.bmp' % i, upper_jaw)
